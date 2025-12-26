@@ -1,9 +1,9 @@
 import os
 from telegram.ext import ApplicationBuilder,CommandHandler,MessageHandler,filters,ContextTypes
 
-TOKEN = "8404081837:AAF9lT_adIUY8ou8LPfdUDXNqqE6DDe86K0"
+TOKEN = os.environ.get("BOT_TOKEN")
+CHANNEL = os.environ.get("CHANNEL_ID")
 
-CHANNEL = ""
 VIDEO_FOLDER = "Video"
 os.makedirs(VIDEO_FOLDER,exist_ok=True)
 pending = {}
