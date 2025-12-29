@@ -57,12 +57,18 @@ async def status(update,context):
         f"{bar}"
     )
 
-async def receive_video(update,context):
+async def receive_video(update, context):
     user_id = update.message.from_user.id
-    video = update.message.video
-    file = await video.get_file()
 
-    path = f"{VIDEO_FOLDER}/{video.file_unique_id}.mp4"
+    if update.message.video:
+        media = update.message.video
+    elif update.message.document and update.message.document.mime_type.startswith("video"):
+        media = update.message.document
+    else:
+        return
+
+    file = await media.get_file()
+    path = f"{VIDEO_FOLDER}/{media.file_unique_id}.mp4"
     await file.download_to_drive(path)
 
     pending.setdefault(user_id, []).append({
@@ -81,6 +87,7 @@ async def receive_video(update,context):
         "📤 Vidéo reçue\nChoisis le format :",
         reply_markup=keyboard
     )
+
 
 async def choose_format(update,context):
     query = update.callback_query
@@ -121,7 +128,7 @@ async def receive_title(update,context):
                 await context.bot.send_document(
                     chat_id=CHANNEL,
                     document=video_file,
-                    thumbnail=t,
+                    thumb=t,
                     caption=title,
                     filename=filename,
                     protect_content=True
@@ -151,11 +158,11 @@ async def receive_title(update,context):
 def main():
     app = ApplicationBuilder().token(TOKEN).build()
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("status", status))
-    app.add_handler(MessageHandler(filters.VIDEO, receive_video))
+    app.add_handler(CommandHandler("start",start))
+    app.add_handler(CommandHandler("status",status))
+    app.add_handler(MessageHandler(filters.VIDEO | filters.Document.VIDEO,receive_video))
     app.add_handler(CallbackQueryHandler(choose_format))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, receive_title))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND,receive_title))
 
     print("🤖 Bot Telegram lancé avec succès")
     app.run_polling()
