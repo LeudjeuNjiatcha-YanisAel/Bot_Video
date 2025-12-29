@@ -1,5 +1,8 @@
 import os
 import subprocess
+import asyncio
+from aiohttp import web
+import threading
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder,CommandHandler,MessageHandler,CallbackQueryHandler,filters
 
@@ -138,7 +141,7 @@ async def receive_title(update,context):
     os.remove(path)
     pending[user_id].pop(0)
 
-    context.user_data["done"] = context.user_data.get("done", 0) + 1
+    context.user_data["done"] = context.user_data.get("done",0) + 1
     done = context.user_data["done"]
     total = done + len(pending.get(user_id, []))
     bar = progress_bar(done, total)
@@ -155,6 +158,15 @@ async def receive_title(update,context):
 
     await update.message.reply_text("✅ Publication terminée.")
 
+async def health(request):
+    return web.Response(text="Bot is running")
+
+def run_web():
+    app = web.Application()
+    app.router.add_get("/",health)
+    web.run_app(app,port=8080)
+
+
 def main():
     app = ApplicationBuilder().token(TOKEN).build()
 
@@ -167,4 +179,6 @@ def main():
     print("🤖 Bot Telegram lancé avec succès")
     app.run_polling()
 
-main()
+if __name__ == "__main__":
+    threading.Thread(target=run_web).start()
+    main()
